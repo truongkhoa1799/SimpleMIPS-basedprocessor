@@ -1,0 +1,51 @@
+module myLCD_Controller(data_in,start,clk,rst,LCD_RW,LCD_DATA,LCD_RS,LCD_EN,done_write);
+	input [7:0]	data_in;
+	input start;
+	input clk,rst;
+	output LCD_RW;
+	output [7:0]LCD_DATA;
+	output reg LCD_RS;
+	output reg LCD_EN;
+	output reg done_write;
+	
+	parameter limit=16;
+	
+	reg [4:0]count;
+	reg [1:0]state;
+	
+	assign LCD_RW=1'b0;
+	assign LCD_DATA=data_in;
+	
+	always@(posedge clk,negedge rst)
+		if(!rst) begin
+			LCD_RS			<=1'b0;
+			done_write		<=1'b0;
+		end
+		else begin
+			case (state)
+			2'b00:begin
+				if(start) begin
+					state		<=2'b01;
+					count		<=5'b0000;
+				end
+			end
+			2'b01:begin
+				state			<=2'b10;
+				LCD_EN		<=1'b1;
+			end
+			2'b10:begin
+				if(count<limit)
+					count	<=count+1'b1;
+				else begin
+					count		<=5'b00000;
+					state		<=2'b11;
+				end
+			end
+			2'b11:begin
+				LCD_EN		<=1'b0;
+				done_write	<=1'b1;
+				state			<=2'b00;
+			end
+			endcase
+		end
+endmodule
